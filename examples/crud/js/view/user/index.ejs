@@ -1,0 +1,29 @@
+<div class="user-list">
+	<h2 class="title">Users</h2>
+	<ul class="toolbar">
+		<li>
+			<a href="javascript:;" class="btn-add-user" data-popup="addUserPopup" title="Add user">Add user</a>
+		</li>
+	</ul>
+	<table colspan="0" cellpadding="0">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>E-mail</th>
+			</tr>
+		</thead>
+	</table>
+
+	<div class="popup" id="addUserPopup">
+		<form id="addUserForm">
+			<label for="name">Name</label><input type="text" name="name" value="" id="name">
+			<label for="username">Username</label><input type="text" name="username" value="" id="username">
+			<label for="email">E-mail</label><input type="text" name="email" value="" id="email">
+			<label for="password">Password</label><input type="password" name="password" value="" id="password">
+			<div class="submit-wrapper">
+				<a href="javascript:;" title="Cancelar" class="close-popup">Cancelar</a>
+				<input type="submit" value="Enviar">
+			</div>
+		</form>
+	</div>
+</div>
