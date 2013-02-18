@@ -18,6 +18,7 @@ var jmvc = {};
     var events = {};
     var controllers = {};
     var models = {};
+    var libraries = {};
     var modelID = 0;
     jmvc.controllers = {
         get: function(controller) {
@@ -44,6 +45,13 @@ var jmvc = {};
         config = $.extend(config, _config);
     };
 
+    jmvc.registerLibrary = function (name, path) {
+        libraries[name] = {
+            path: path,
+            loaded: false
+        };
+    }//TODO: jmvc.registerLibraries
+
     jmvc.Router = (function() {
         
         var routes = {
@@ -65,6 +73,24 @@ var jmvc = {};
             }
             controller = controllers[_controller];
             if (initialize === true) {
+                var i
+                  , dependency;
+
+                for (i = 0; i < controller.dependencies.length; i ++) {
+                    dependency = controller.dependencies[i];
+                    if (libraries[dependency].loaded === false) {
+                        $.ajax({
+                           url:  libraries[dependency].path,//TODO: error handling and ensuring it waits for loading before initializing the controller
+                           dataType: 'script',
+                           success: function() {
+                               
+                           },
+                           error: function(a, b, error) {
+                               
+                           }
+                        });
+                    }
+                }
                 controller.init();
             }
             controller.load();

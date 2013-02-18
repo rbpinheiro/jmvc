@@ -4,6 +4,8 @@ jmvc.config({
     'default_id_key': '_id'
 });
 
+jmvc.registerLibrary('ejs', 'js/libraries/ejs_production.js');
+
 jmvc.Router({
     'test': 'index',
     'login': 'auth/login',
