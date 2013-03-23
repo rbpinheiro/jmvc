@@ -6,6 +6,7 @@ jmvc.Controller('user', {
         'click .close-popup': 'closePopup'
         
     },
+    dependencies: ['ejs'],
     init: function() {
         this.screenlocker = $('#screenlocker');
     },

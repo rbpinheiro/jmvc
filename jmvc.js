@@ -73,27 +73,33 @@ var jmvc = {};
             }
             controller = controllers[_controller];
             if (initialize === true) {
-                var i
-                  , dependency;
+                var dependency
+                  , loadDependency;
 
-                for (i = 0; i < controller.dependencies.length; i ++) {
-                    dependency = controller.dependencies[i];
-                    if (libraries[dependency].loaded === false) {
-                        $.ajax({
-                           url:  libraries[dependency].path,//TODO: error handling and ensuring it waits for loading before initializing the controller
-                           dataType: 'script',
-                           success: function() {
-                               
-                           },
-                           error: function(a, b, error) {
-                               
-                           }
-                        });
+                loadDependency = function(index) {
+                    dependency = controller.dependencies[index];
+                    if (dependency !== undefined) {
+                        if (libraries[dependency].loaded === false) {
+                            $.ajax({
+                               url:  libraries[dependency].path,//TODO: error handling
+                               dataType: 'script',
+                               success: function() {
+                                   loadDependency(index + 1);
+                               },
+                               error: function(a, b, error) {
+                                   
+                               }
+                            });
+                        }
+                    } else {
+                        controller.init();
+                        controller.load();
                     }
                 }
-                controller.init();
+                loadDependency(0);
+            } else {
+                controller.load();
             }
-            controller.load();
         }
         
         function goTo(url) {
@@ -141,6 +147,7 @@ var jmvc = {};
         controllers[name] = $.extend({
             element: $(config.default_element),
             events: {},
+            dependencies: [],
             init: function() {},
             load: function() {},
             unload: function() {},

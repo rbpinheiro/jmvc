@@ -7,8 +7,8 @@ jmvc.config({
 jmvc.registerLibrary('ejs', 'js/libraries/ejs_production.js');
 
 jmvc.Router({
-    'test': 'index',
-    'login': 'auth/login',
-    'name': 'name',
-    'user': 'user'
+    '/test': 'index',
+    '/login': 'auth/login',
+    '/name': 'name',
+    '/user': 'user'
 });

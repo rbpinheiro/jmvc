@@ -4,6 +4,7 @@ jmvc.Controller('name', {
     events: {
         'submit form': 'saveName'
     },
+    dependencies: ['ejs'],
     init: function() {
         console.log('this should only be triggered on script load');
     },
