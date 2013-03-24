@@ -1,5 +1,3 @@
-
-
 jmvc.Model('person', {
     attributes: {
         'name': 'string'
