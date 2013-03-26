@@ -19,14 +19,24 @@ module.exports = function(grunt) {
           'build/jmvc.js': ['build/jmvc.js']
         }
       }
+    },
+    jasmine: {
+      jmvc: {
+        src: 'build/jmvc.js',
+        options: {
+          specs: 'specs/*Spec.js',
+          vendor: 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'
+        }
+      }
     }
     
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-jasmine');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat', 'uglify']);
+  grunt.registerTask('default', ['concat', 'uglify', 'jasmine']);
 
 };

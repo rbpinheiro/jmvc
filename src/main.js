@@ -20,6 +20,7 @@ var jmvc = {};
             return jmvc._controllers[controller];
         }
     };
+    
     jmvc.models = {
         load: function(model, cb) {
             if (model in jmvc._models) {
