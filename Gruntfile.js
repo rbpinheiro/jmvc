@@ -28,15 +28,22 @@ module.exports = function(grunt) {
           vendor: 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'
         }
       }
+    },
+    copy: {
+      main: {
+        files: [
+          {expand: true, cwd:'build/', src:['jmvc.js'], dest:'examples/crud/public/javascripts/libraries/'}
+        ]
+      }
     }
-    
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat', 'uglify', 'jasmine']);
+  grunt.registerTask('default', ['concat', 'jasmine', 'copy']);
 
 };

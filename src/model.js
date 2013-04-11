@@ -65,7 +65,8 @@ jmvc.Model = function(name, model) {
             });
         },
         fetch: function(data, success, error) {
-            var url = this.url;
+            var url = this.url,
+                self = this;
             if (typeof data === 'string' || typeof data === 'number') {
                 url = url + '/' + data;
             }
@@ -74,7 +75,7 @@ jmvc.Model = function(name, model) {
                 url: url,
                 data: data,
                 success: function(data, textStatus, jqXHR) {
-                    this.set(data);
+                    self.set(data);
                     if (success) {
                         success.call(self, data, textStatus);
                     }
