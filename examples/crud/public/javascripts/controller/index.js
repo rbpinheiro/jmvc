@@ -14,12 +14,13 @@ jmvc.Controller('index', {
 	//this will be called every time this route is loaded
 	load: function () {
 		//renders the view with the name "index"
-		jmvc.models.load('movie', function(movieCollection) {
-			movieCollection.fetch({}, function(movies) {
-				console.log(movies);
+		var self = this;
+		jmvc.models.load('movie', function(movie) {
+			movie.fetch({}, function(moviesCollection) {
+				self.render('index', {movies: moviesCollection.data});
 			});
 		});
-		this.render('index');
+		this.render('index', {movies: []});
 	},
 	//this will be called every time this route is unloaded (other route is loaded)
 	unload: function () {

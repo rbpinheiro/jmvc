@@ -12,4 +12,12 @@
 			<th>Rating</th>
 		</tr>
 	</thead>
+	<tbody>
+		<% for (var i = 0; i < movies.length; i ++) { %>
+			<tr>
+				<td><%=movies[i].title%></td>
+				<td><%=movies[i].rating%></td>
+			</tr>
+		<% } %>
+	</tbody>
 </table>

@@ -204,91 +204,208 @@ jmvc.Controller = (function () {
     };
     return Controller;
 }());
-jmvc.Model = function(name, model) {
-    jmvc._models[name] = function() {
-        this._eventNamespace = 'model.' + name + jmvc._modelID;
-        jmvc._modelID += 1;
-        this.init();
+(function () {
+    jmvc.modelAdapters = {};
+
+    jmvc.modelAdapters['rest'] = function (model) {
+        var _public = {
+            save: function(success, error) {
+                var request_type = 'POST';
+                var url = model.url;
+                if (model.get(model.id_key)) {
+                    request_type = 'PUT';
+                    url += '/' + model.get(model.id_key);
+                }
+                $.ajax({
+                    type: request_type,
+                    url: url,
+                    data: model.toJson(),
+                    success: function(data, textStatus, jqXHR) {
+                        model.set(data);
+                        if (success) {
+                            success(model, data, textStatus);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        if (error) {
+                            error(self, textStatus, errorThrown);
+                        }
+                    }
+                });
+            },
+            fetch: function(data, success, error) {
+                var url = model.url;
+                if (typeof data === 'string' || typeof data === 'number') {
+                    url = url + '/' + data;
+                }
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    data: data,
+                    success: function(data, textStatus, jqXHR) {
+                        var mc = jmvc.ModelCollection(model, data);
+                        if (success) {
+                            success(mc, textStatus);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        if (error) {
+                            error(model, textStatus, errorThrown);
+                        }
+                    }
+                });
+            },
+            fetchOne: function(data, success, error) {
+                var url = model.url;
+                if (typeof data === 'string' || typeof data === 'number') {
+                    url = url + '/' + data;
+                }
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    data: data,
+                    success: function(data, textStatus, jqXHR) {
+                        model.set(data);
+                        if (success) {
+                            success(model, data, textStatus);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        if (error) {
+                            error(model, textStatus, errorThrown);
+                        }
+                    }
+                });
+            },
+            remove: function(success, error) {
+                var url = model.url + '/' + model.get(model.id_key);
+                $.ajax({
+                    type: "DELETE",
+                    url: url,
+                    data: model.toJson(),
+                    success: function(data, textStatus, jqXHR) {
+                        model.set(data);
+                        if (success) {
+                            success(model, data, textStatus);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        if (error) {
+                            error(model, textStatus, errorThrown);
+                        }
+                    }
+                });
+            }
+        };
+
+        return _public;
     };
-    
-    jmvc._models[name].prototype = $.extend({
+
+    jmvc.Model = function(name, model) {
+        jmvc._models[name] = function() {
+            this._eventNamespace = 'model.' + name + jmvc._modelID;
+            jmvc._modelID += 1;
+            this.adapter = jmvc.modelAdapters['rest'](this);
+            this.init();
+        };
+        
+        jmvc._models[name].prototype = $.extend({
+            url: '',
+            events: {},
+            values: {},
+            id_key: jmvc._config.default_id_key,
+            init: function() {},
+            set: function(key, value) {
+                if (typeof key === 'object') {
+                    for (var k in key) {
+                        this.set(k, key[k]);
+                    }
+                } if (typeof key === 'string' && value === undefined) {
+                    var values = key.split('&');
+                    for (var v=0; v<values.length; v++) {
+                        value = values[v].split('=');
+                        if (value[1] !== undefined) {
+                            this.set(value[0], value[1]);
+                        }
+                    }
+                } else {
+                    this.values[key] = value;
+                    jmvc.eventBus.publish(this._eventNamespace, 'change', [key], this);
+                    jmvc.eventBus.publish(this._eventNamespace, 'change:'+key, [key], this);
+                }
+            },
+            get: function(key) {
+                return this.values[key];
+            },
+            toJson: function() {
+                return this.values;
+            },
+            bind: function(event, callback) {
+                jmvc.eventBus.subscribe(this._eventNamespace, event, callback);
+            },
+            save: function(success, error) {
+                this.adapter.save(success, error);
+            },
+            fetch: function(data, success, error) {
+                this.adapter.fetch(data, success, error);
+            },
+            fetchOne: function(data, success, error) {
+                this.adapter.fetchOne(data, success, error);
+            },
+            remove: function(success, error) {
+                this.adapter.remove(success, error);
+            }
+        },model);
+    };
+}());
+jmvc.ModelCollection = function(model, data) {
+    var _public = {
+        data: data || [],
+        model: model,
         url: '',
         events: {},
-        values: {},
-        id_key: jmvc._config.default_id_key,
-        init: function() {},
         set: function(key, value) {
-            if (typeof key === 'object') {
-                for (var k in key) {
-                    this.set(k, key[k]);
-                }
-            } if (typeof key === 'string' && value === undefined) {
-                var values = key.split('&');
-                for (var v=0; v<values.length; v++) {
-                    value = values[v].split('=');
-                    if (value[1] !== undefined) {
-                        this.set(value[0], value[1]);
-                    }
-                }
-            } else {
-                this.values[key] = value;
-                jmvc.eventBus.publish(this._eventNamespace, 'change', [key], this);
-                jmvc.eventBus.publish(this._eventNamespace, 'change:'+key, [key], this);
+            for (var m in this.data) {
+                m.set(key, value);
             }
         },
         get: function(key) {
-            return this.values[key];
+            var values = [];
+            for (var m in this.data) {
+                values.push(m.get(key));
+            }
+            return values;
         },
         toJson: function() {
-            return this.values;
+            var values = [];
+            for (var m in this.data) {
+                values.push(m.toJson());
+            }
+            return values;
         },
         bind: function(event, callback) {
-            jmvc.eventBus.subscribe(this._eventNamespace, event, callback);
+            for (var m in this.data) {
+                values.bind(event, callback);
+            }
         },
         save: function(success, error) {
-            var self = this;
-            var request_type = 'POST';
-            var url = this.url;
-            if (this.get(this.id_key)) {
-                request_type = 'PUT';
-                url += '/' + this.get(this.id_key);
-            }
-            $.ajax({
-                type: request_type,
-                url: url,
-                data: this.toJson(),
-                success: function(data, textStatus, jqXHR) {
-                    self.set(data);
-                    if (success) {
-                        success.call(self, data, textStatus);
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    if (error) {
-                        error.call(self, textStatus, errorThrown);
-                    }
-                }
-            });
+            
         },
         fetch: function(data, success, error) {
-            var url = this.url,
-                self = this;
-            if (typeof data === 'string' || typeof data === 'number') {
-                url = url + '/' + data;
-            }
+            var url = this.url;
             $.ajax({
                 type: "GET",
                 url: url,
                 data: data,
                 success: function(data, textStatus, jqXHR) {
-                    self.set(data);
+                    //this.set(data);
                     if (success) {
-                        success.call(self, data, textStatus);
+                        success(self, data, textStatus);
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     if (error) {
-                        error.call(self, textStatus, errorThrown);
+                        error(self, textStatus, errorThrown);
                     }
                 }
             });
@@ -302,89 +419,19 @@ jmvc.Model = function(name, model) {
                 success: function(data, textStatus, jqXHR) {
                     this.set(data);
                     if (success) {
-                        success.call(self, data, textStatus);
+                        success(self, data, textStatus);
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     if (error) {
-                        error.call(self, textStatus, errorThrown);
+                        error(self, textStatus, errorThrown);
                     }
                 }
             });
         }
-    },model);
-};
-jmvc.ModelCollection = function() {};
+    };
 
-jmvc.ModelCollection.prototype = {
-    url: '',
-    events: {},
-    modelObjects: {},
-    set: function(key, value) {
-        for (var m in this.modelObjects) {
-            m.set(key, value);
-        }
-    },
-    get: function(key) {
-        var values = [];
-        for (var m in this.modelObjects) {
-            values.push(m.get(key));
-        }
-        return values;
-    },
-    toJson: function() {
-        var values = [];
-        for (var m in this.modelObjects) {
-            values.push(m.toJson());
-        }
-        return values;
-    },
-    bind: function(event, callback) {
-        for (var m in this.modelObjects) {
-            values.bind(event, callback);
-        }
-    },
-    save: function(success, error) {
-        
-    },
-    fetch: function(data, success, error) {
-        var url = this.url;
-        $.ajax({
-            type: "GET",
-            url: url,
-            data: data,
-            success: function(data, textStatus, jqXHR) {
-                //this.set(data);
-                if (success) {
-                    success.call(self, data, textStatus);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                if (error) {
-                    error.call(self, textStatus, errorThrown);
-                }
-            }
-        });
-    },
-    delete: function(success, error) {
-        var url = this.url + '/' + this.get(this.id_key);
-        $.ajax({
-            type: "DELETE",
-            url: url,
-            data: this.toJson(),
-            success: function(data, textStatus, jqXHR) {
-                this.set(data);
-                if (success) {
-                    success.call(self, data, textStatus);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                if (error) {
-                    error.call(self, textStatus, errorThrown);
-                }
-            }
-        });
-    }
+    return _public;
 };
 jmvc.eventBus = {
 	subscribe: function(namespace, event, callback) {
